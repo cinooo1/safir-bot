@@ -47,6 +47,9 @@ REKLAM_KELIMELERI = [
     "bedava nitro", "ücretsiz boost", "hesap veriyorum", "çark", "çekiliş"
 ]
 
+LOG_KANAL_ID = 1530901600032522320
+HOSGELDIN_KANAL_ID = 1529984361112539288
+
 def is_owner():
     async def predicate(ctx):
         return any(role.id == OWNER_ROLE for role in ctx.author.roles)
@@ -85,6 +88,11 @@ async def on_message(message):
     user_id = message.author.id
     now = time.time()
 
+    # sa cevabı
+    if content in ["sa", "sea", "selam", "slm"]:
+        await message.channel.send(f"as {message.author.mention} hg kral")
+
+    # Reklam kontrolü
     reklam = False
     if re.search(r"(discord\.gg|discord\.com/invite|dc\.gg|discordapp\.com/invite)", content):
         reklam = True
@@ -107,6 +115,7 @@ async def on_message(message):
             pass
         return
 
+    # Spam kontrolü
     user_messages[user_id] = [t for t in user_messages[user_id] if now - t < SPAM_SECONDS]
     user_messages[user_id].append(now)
 
@@ -121,6 +130,28 @@ async def on_message(message):
         return
 
     await bot.process_commands(message)
+
+@bot.event
+async def on_member_join(member):
+    # Giriş logu
+    log_kanal = bot.get_channel(LOG_KANAL_ID)
+    if log_kanal:
+        await log_kanal.send(f"{member.mention} **orusubun çocugu** girmiş | Üye sayısı: **{member.guild.member_count}**")
+
+    # Hoş geldin mesajı
+    hosgeldin_kanal = bot.get_channel(HOSGELDIN_KANAL_ID)
+    if hosgeldin_kanal:
+        await hosgeldin_kanal.send(
+            f"safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {member.mention} senin sayesinde üye sayımız bu kadar **{member.guild.member_count}** üye"
+        )
+
+@bot.event
+async def on_member_remove(member):
+    log_kanal = bot.get_channel(LOG_KANAL_ID)
+    if log_kanal:
+        await log_kanal.send(f"{member.mention} **orsubunnnnnn çocugu** sunucudan quit basmış | Üye sayısı: **{member.guild.member_count}**")
+
+# ================== KOMUTLAR ==================
 
 @bot.command()
 @can_mute()
@@ -211,6 +242,19 @@ async def sil(ctx, miktar: int = 10):
     await ctx.channel.purge(limit=miktar + 1)
     msg = await ctx.send(f"`{miktar}` mesaj silindi.")
     await msg.delete(delay=3)
+
+@bot.command()
+@is_owner()
+async def nuke(ctx):
+    try:
+        channel = ctx.channel
+        position = channel.position
+        new_channel = await channel.clone(reason=f"Nuke - {ctx.author}")
+        await channel.delete()
+        await new_channel.edit(position=position)
+        await new_channel.send(f"**{ctx.author.mention}** kanalı nukeledi.\n<a:nuke:1531044549928157434>")
+    except Exception as e:
+        await ctx.send(f"Nuke atılamadı: {e}")
 
 @bot.command()
 @is_owner()
@@ -335,7 +379,7 @@ async def yardim(ctx):
     )
     embed.add_field(
         name="Owner Yetkisi",
-        value="`a!kick @kişi sebep`\n`a!sil 30`\n`a!lock` / `a!unlock`\n`a!slowmode 5`\n`a!join` / `a!leave`\n`a!say mesaj`\n`a!uyarısil @kişi`",
+        value="`a!kick @kişi sebep`\n`a!sil 30`\n`a!nuke`\n`a!lock` / `a!unlock`\n`a!slowmode 5`\n`a!join` / `a!leave`\n`a!say mesaj`\n`a!uyarısil @kişi`",
         inline=False
     )
     embed.add_field(
