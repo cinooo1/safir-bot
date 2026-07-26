@@ -4,16 +4,33 @@ from collections import defaultdict
 import time
 import re
 from datetime import timedelta, datetime
+from flask import Flask
+from threading import Thread
+import os
 
+# ================== KEEP ALIVE ==================
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot aktif"
+
+def run():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# ================== BOT AYARLARI ==================
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="a!", intents=intents, help_command=None)
 
-# ================== ROL ID'LERİ ==================
 OWNER_ROLE = 1529961136081076294
 MUTE_ROLE  = 1529960144312471602
 BAN_ROLE   = 1529959924900167870
 
-# ================== AYARLAR ==================
 SPAM_COUNT = 5
 SPAM_SECONDS = 7
 MUTE_SURESI = 300
@@ -30,7 +47,6 @@ REKLAM_KELIMELERI = [
     "bedava nitro", "ücretsiz boost", "hesap veriyorum", "çark", "çekiliş"
 ]
 
-# ================== YETKİ KONTROLLERİ ==================
 def is_owner():
     async def predicate(ctx):
         return any(role.id == OWNER_ROLE for role in ctx.author.roles)
@@ -46,7 +62,6 @@ def can_ban():
         return any(role.id in [OWNER_ROLE, BAN_ROLE] for role in ctx.author.roles)
     return commands.check(predicate)
 
-# ================== BOT HAZIR ==================
 @bot.event
 async def on_ready():
     print(f"Bot hazır → {bot.user}")
@@ -57,7 +72,6 @@ async def on_ready():
         )
     )
 
-# ================== OTOMATİK MODERASYON ==================
 @bot.event
 async def on_message(message):
     if message.author.bot or not message.guild:
@@ -71,7 +85,6 @@ async def on_message(message):
     user_id = message.author.id
     now = time.time()
 
-    # Reklam kontrolü
     reklam = False
     if re.search(r"(discord\.gg|discord\.com/invite|dc\.gg|discordapp\.com/invite)", content):
         reklam = True
@@ -94,7 +107,6 @@ async def on_message(message):
             pass
         return
 
-    # Spam kontrolü
     user_messages[user_id] = [t for t in user_messages[user_id] if now - t < SPAM_SECONDS]
     user_messages[user_id].append(now)
 
@@ -109,8 +121,6 @@ async def on_message(message):
         return
 
     await bot.process_commands(message)
-
-# ================== KOMUTLAR ==================
 
 @bot.command()
 @can_mute()
@@ -336,7 +346,6 @@ async def yardim(ctx):
     embed.set_footer(text="Reklam yapanlar otomatik ban yer.")
     await ctx.send(embed=embed)
 
-# ================== HATA YAKALAMA ==================
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
@@ -350,5 +359,6 @@ async def on_command_error(ctx, error):
     else:
         print(f"Hata: {error}")
 
-import os
+# ================== BAŞLAT ==================
+keep_alive()
 bot.run(os.getenv("TOKEN"))
