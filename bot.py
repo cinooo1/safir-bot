@@ -88,11 +88,9 @@ async def on_message(message):
     user_id = message.author.id
     now = time.time()
 
-    # sa cevabı
     if content in ["sa", "sea", "selam", "slm"]:
         await message.channel.send(f"as {message.author.mention} hg kral")
 
-    # Reklam kontrolü
     reklam = False
     if re.search(r"(discord\.gg|discord\.com/invite|dc\.gg|discordapp\.com/invite)", content):
         reklam = True
@@ -115,7 +113,6 @@ async def on_message(message):
             pass
         return
 
-    # Spam kontrolü
     user_messages[user_id] = [t for t in user_messages[user_id] if now - t < SPAM_SECONDS]
     user_messages[user_id].append(now)
 
@@ -131,17 +128,23 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+# ================== DETAYLI LOGLAR ==================
 @bot.event
 async def on_member_join(member):
-    # Giriş logu
     log_kanal = bot.get_channel(LOG_KANAL_ID)
     if log_kanal:
-        await log_kanal.send(f"{member.mention} **orusubun çocugu** girmiş | Üye sayısı: **{member.guild.member_count}**")
+        hesap = member.created_at.strftime("%d.%m.%Y %H:%M")
+        await log_kanal.send(
+            f"**🟢 GİRİŞ**\n"
+            f"Kullanıcı: {member.mention} (`{member}`)\n"
+            f"ID: `{member.id}`\n"
+            f"Hesap Açılış: `{hesap}`\n"
+            f"Üye Sayısı: **{member.guild.member_count}**"
+        )
 
-    # Hoş geldin mesajı
-    hosgeldin_kanal = bot.get_channel(HOSGELDIN_KANAL_ID)
-    if hosgeldin_kanal:
-        await hosgeldin_kanal.send(
+    hosgeldin = bot.get_channel(HOSGELDIN_KANAL_ID)
+    if hosgeldin:
+        await hosgeldin.send(
             f"safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {member.mention} senin sayesinde üye sayımız bu kadar **{member.guild.member_count}** üye"
         )
 
@@ -149,7 +152,82 @@ async def on_member_join(member):
 async def on_member_remove(member):
     log_kanal = bot.get_channel(LOG_KANAL_ID)
     if log_kanal:
-        await log_kanal.send(f"{member.mention} **orsubunnnnnn çocugu** sunucudan quit basmış | Üye sayısı: **{member.guild.member_count}**")
+        await log_kanal.send(
+            f"**🔴 ÇIKIŞ**\n"
+            f"Kullanıcı: {member.mention} (`{member}`)\n"
+            f"ID: `{member.id}`\n"
+            f"Üye Sayısı: **{member.guild.member_count}**"
+        )
+
+@bot.event
+async def on_member_ban(guild, user):
+    log_kanal = bot.get_channel(LOG_KANAL_ID)
+    if log_kanal:
+        sebep = "Bilinmiyor"
+        yetkili = "Bilinmiyor"
+        try:
+            async for entry in guild.audit_logs(limit=3, action=discord.AuditLogAction.ban):
+                if entry.target.id == user.id:
+                    sebep = entry.reason or "Sebep belirtilmemiş"
+                    yetkili = entry.user.mention
+                    break
+        except:
+            pass
+
+        await log_kanal.send(
+            f"**⛔ BAN**\n"
+            f"Kullanıcı: {user.mention} (`{user}`)\n"
+            f"Yetkili: {yetkili}\n"
+            f"Sebep: `{sebep}`\n"
+            f"Üye Sayısı: **{guild.member_count}**"
+        )
+
+@bot.event
+async def on_member_unban(guild, user):
+    log_kanal = bot.get_channel(LOG_KANAL_ID)
+    if log_kanal:
+        yetkili = "Bilinmiyor"
+        try:
+            async for entry in guild.audit_logs(limit=3, action=discord.AuditLogAction.unban):
+                if entry.target.id == user.id:
+                    yetkili = entry.user.mention
+                    break
+        except:
+            pass
+
+        await log_kanal.send(
+            f"**🔓 UNBAN**\n"
+            f"Kullanıcı: {user.mention} (`{user}`)\n"
+            f"Yetkili: {yetkili}"
+        )
+
+@bot.event
+async def on_member_update(before, after):
+    log_kanal = bot.get_channel(LOG_KANAL_ID)
+    if not log_kanal:
+        return
+
+    # İsim değişikliği
+    if before.display_name != after.display_name:
+        await log_kanal.send(
+            f"**📝 İSİM DEĞİŞTİ**\n"
+            f"Kullanıcı: {after.mention}\n"
+            f"Eski: `{before.display_name}`\n"
+            f"Yeni: `{after.display_name}`"
+        )
+
+    # Rol değişikliği
+    if before.roles != after.roles:
+        eklenen = [r for r in after.roles if r not in before.roles]
+        cikarilan = [r for r in before.roles if r not in after.roles]
+
+        if eklenen:
+            roller = ", ".join([r.mention for r in eklenen])
+            await log_kanal.send(f"**➕ ROL ALINDI**\nKullanıcı: {after.mention}\nRol: {roller}")
+
+        if cikarilan:
+            roller = ", ".join([r.mention for r in cikarilan])
+            await log_kanal.send(f"**➖ ROL ALINDI**\nKullanıcı: {after.mention}\nRol: {roller}")
 
 # ================== KOMUTLAR ==================
 
@@ -252,7 +330,7 @@ async def nuke(ctx):
         new_channel = await channel.clone(reason=f"Nuke - {ctx.author}")
         await channel.delete()
         await new_channel.edit(position=position)
-        await new_channel.send(f"**{ctx.author.mention}** kanalı nukeledi.\n<a:nuke:1531044549928157434>")
+        await new_channel.send(f"**{ctx.author.mention}** kanalı nukeledi.\nhttps://media.tenor.com/8j1g2c5Q5Q8AAAAC/explosion-boom.gif")
     except Exception as e:
         await ctx.send(f"Nuke atılamadı: {e}")
 
