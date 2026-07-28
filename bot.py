@@ -82,14 +82,13 @@ async def on_message(message):
 
     content = message.content.lower().strip()
 
-    # sa cevabı
+    # sa cevabı (Aleyküm Selam ile)
     if content in ["sa", "sea", "selam", "slm", "selamın aleyküm", "selamunaleykum", "selamun aleykum"]:
         await message.channel.send(
-            f"safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention} senin sayesinde üye sayımız bu kadar **{message.guild.member_count}** üye"
+            f"Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention}"
         )
         return
 
-    # Owner'a otomatik ceza uygulama
     if any(role.id == OWNER_ROLE for role in message.author.roles):
         await bot.process_commands(message)
         return
@@ -139,7 +138,7 @@ async def on_message(message):
 # ================== DETAYLI LOGLAR ==================
 @bot.event
 async def on_member_join(member):
-    # DM
+    # DM (Aleyküm Selam YOK)
     try:
         await member.send(
             "safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma"
@@ -159,7 +158,7 @@ async def on_member_join(member):
             f"Üye Sayısı: **{member.guild.member_count}**"
         )
 
-    # Hoş geldin kanalı
+    # Hoş geldin kanalı (Aleyküm Selam YOK)
     hosgeldin = bot.get_channel(HOSGELDIN_KANAL_ID)
     if hosgeldin:
         await hosgeldin.send(
