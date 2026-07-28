@@ -80,19 +80,22 @@ async def on_message(message):
     if message.author.bot or not message.guild:
         return
 
+    content = message.content.lower().strip()
+
+    # sa cevabı (büyük/küçük harf fark etmez)
+    if content in ["sa", "sea", "selam", "slm", "selamın aleyküm", "selamunaleykum", "selamun aleykum"]:
+        await message.channel.send(
+            f"Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention}"
+        )
+        return
+
+    # Owner'a otomatik ceza uygulama
     if any(role.id == OWNER_ROLE for role in message.author.roles):
         await bot.process_commands(message)
         return
 
-    content = message.content.lower()
     user_id = message.author.id
     now = time.time()
-
-    # sa cevabı
-    if content in ["sa", "sea", "selam", "slm", "selamın aleyküm", "selamunaleykum"]:
-        await message.channel.send(
-            f"Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention}"
-        )
 
     # Reklam kontrolü
     reklam = False
@@ -136,7 +139,6 @@ async def on_message(message):
 # ================== DETAYLI LOGLAR ==================
 @bot.event
 async def on_member_join(member):
-    # DM at
     try:
         await member.send(
             "Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma"
@@ -144,7 +146,6 @@ async def on_member_join(member):
     except:
         pass
 
-    # Log kanalı
     log_kanal = bot.get_channel(LOG_KANAL_ID)
     if log_kanal:
         hesap = member.created_at.strftime("%d.%m.%Y %H:%M")
@@ -156,7 +157,6 @@ async def on_member_join(member):
             f"Üye Sayısı: **{member.guild.member_count}**"
         )
 
-    # Hoş geldin kanalı
     hosgeldin = bot.get_channel(HOSGELDIN_KANAL_ID)
     if hosgeldin:
         await hosgeldin.send(
@@ -222,7 +222,6 @@ async def on_member_update(before, after):
     if not log_kanal:
         return
 
-    # İsim değişikliği
     if before.display_name != after.display_name:
         await log_kanal.send(
             f"**📝 İSİM DEĞİŞTİ**\n"
@@ -231,7 +230,6 @@ async def on_member_update(before, after):
             f"Yeni: `{after.display_name}`"
         )
 
-    # Rol değişikliği
     if before.roles != after.roles:
         eklenen = [r for r in after.roles if r not in before.roles]
         cikarilan = [r for r in before.roles if r not in after.roles]
