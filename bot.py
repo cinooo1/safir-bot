@@ -82,10 +82,10 @@ async def on_message(message):
 
     content = message.content.lower().strip()
 
-    # sa cevabı (büyük/küçük harf fark etmez)
+    # sa cevabı
     if content in ["sa", "sea", "selam", "slm", "selamın aleyküm", "selamunaleykum", "selamun aleykum"]:
         await message.channel.send(
-            f"Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention}"
+            f"safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {message.author.mention} senin sayesinde üye sayımız bu kadar **{message.guild.member_count}** üye"
         )
         return
 
@@ -139,13 +139,15 @@ async def on_message(message):
 # ================== DETAYLI LOGLAR ==================
 @bot.event
 async def on_member_join(member):
+    # DM
     try:
         await member.send(
-            "Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma"
+            "safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma"
         )
     except:
         pass
 
+    # Log kanalı
     log_kanal = bot.get_channel(LOG_KANAL_ID)
     if log_kanal:
         hesap = member.created_at.strftime("%d.%m.%Y %H:%M")
@@ -157,10 +159,11 @@ async def on_member_join(member):
             f"Üye Sayısı: **{member.guild.member_count}**"
         )
 
+    # Hoş geldin kanalı
     hosgeldin = bot.get_channel(HOSGELDIN_KANAL_ID)
     if hosgeldin:
         await hosgeldin.send(
-            f"Aleyküm Selam safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {member.mention}"
+            f"safire hoş geldin yetkili olmak için nickine safir alarak ve kuralları okumayı unutma {member.mention} senin sayesinde üye sayımız bu kadar **{member.guild.member_count}** üye"
         )
 
 @bot.event
